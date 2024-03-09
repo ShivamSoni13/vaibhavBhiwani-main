@@ -1,0 +1,5 @@
+to start server or backend follow below command 
+1>clone the repo by git clone <url of repo>
+2>git install
+3>install nodemon
+4>nodemon server.js
