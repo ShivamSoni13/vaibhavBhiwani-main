@@ -58,43 +58,42 @@ exports.registerUser = async (req, res) => {
 
 //login  user details
 exports.loginUser = async (req, res) => {
-  const { email, passWord } = req.body;
-  if (!email || !passWord) {
-    return res.status(200).json({ message: "please enter email and passWord" });
-  } else {
-    const loginUser = await userModel.findOne({ email: email });
+  try {
+    const { email, password } = req.body;
 
-    if (loginUser) {
-      const comaprePassWord = await bcryptjs.compare(
-        passWord,
-        loginUser.passWord
-      );
-
-      if (comaprePassWord) {
-        // const token = jsonwebtoken.sign(
-        //   { _id: loginUser._id },
-        //   process.env.SECRETKEY
-        // );
-        const token = loginUser.getJwtToken();
-        res.cookie("vaibhavBhiwaniCookie", token, {
-          expiresIn: "2d",
-          httpOnly: false,
-        });
-
-        return res.status(200).json({
-          success: true,
-          message: "login successfully",
-          loginUser: loginUser,
-          token: token,
-        });
-      } else {
-        return res
-          .status(400)
-          .json({ success: false, message: "check your email or passWord " });
-      }
-    } else {
-      return res.status(400).json({ message: "user not registered" });
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please provide both email and password" });
     }
+
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Incorrect password" });
+    }
+
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY, { expiresIn: '2d' });
+
+    res.cookie("vaibhavBhiwaniCookie", token, {
+      expiresIn: "2d",
+      httpOnly: false,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged in successfully",
+      user: user,
+      token: token,
+    });
+
+  } catch (error) {
+    console.error("Error occurred during login:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 
